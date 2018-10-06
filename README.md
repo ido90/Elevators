@@ -1,6 +1,14 @@
 # Elevators
 Elevators simulator intended to test various algorithms for elevators managing.
 
+Implemented managers
+
+    NOTE: ALL CURRENTLY-IMPLEMENTED MANAGERS ARE EITHER NAIVE OR INCOMPLETE, AND ARE MAINLY USED FOR DEMONSTRATION OF THE SIMULATIVE INFRASTRUCTURE.
+
+    NaiveManager: Use the first elevator to handle passengers arrivals sequentially.
+    NaiveRoundRobin: Use the elevators in turns to handle passengers arrivals.
+    GreedyManager: Try to disperse waiting elevators, and assign elevators to passengers greedily.
+
 Class: ElevatorSimulator.Simulator
 
     This class implements a simulation of elevators which serve arriving passengers.
