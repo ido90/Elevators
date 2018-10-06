@@ -2,6 +2,7 @@
 Elevators simulator intended to test various algorithms for elevators managing.
 
 Class: ElevatorSimulator.Simulator
+
     This class implements a simulation of elevators which serve arriving passengers.
 
     Involved classes:
@@ -27,10 +28,12 @@ Class: ElevatorSimulator.Simulator
 
 
 Module: ElevatorTester
+
     This module defines various scenarios, tests the managers of ElevatorManager
     using ElevatorSimulator, and summarizes the results.
 
 
 Module: ElevatorManager
+
     This module contains the elevator managers (one class per manager).
     
