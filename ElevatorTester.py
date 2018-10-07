@@ -114,12 +114,14 @@ ELEVATOR_TESTS_CONFS = [
 
 class ManagerTester:
 
-    def __init__(self, manager=ElevatorManager.NaiveManager, configurations=()):
+    def __init__(self, manager=ElevatorManager.NaiveManager, configurations=(),
+                 show=False):
         self.manager = manager
         self.configurations = list(configurations)
         self.name = manager.version_info()
         self.results = []
         self.totals = {}
+        self.show = show
 
     def reset(self):
         self.results = []
@@ -133,7 +135,11 @@ class ManagerTester:
             self.results.append(self.single_test(conf))
 
     def single_test(self, conf):
-        x = ElevatorSimulator.Simulator(debug_mode=False, verbose=False, sim_pace=None,
+        if "name" in conf:
+            print('Warning: unexpected "name" field in configuration.')
+            del (conf["name"])
+        x = ElevatorSimulator.Simulator(debug_mode=False, verbose=self.show,
+                                        sim_pace=10 if self.show else None,
                                         manager=self.manager, **conf)
         x.generate_scenario()
         summary = x.run_simulation()
@@ -144,10 +150,12 @@ class ManagerTester:
             np.mean([S['goals']['service_time'][ 1] for S in self.results])
         self.totals['max time'] = \
             np.mean([S['goals']['service_time'][-1] for S in self.results])
-        self.totals['avg dist'] = \
-            np.mean([np.mean(S['goals']['total_distance']) for S in self.results])
+        self.totals['dist per task'] = \
+            np.mean([sum(S['goals']['total_distance'])/S['passengers']['served']
+                     for S in self.results])
         self.totals['std(dist)'] = \
-            np.mean([np.std(S['goals']['total_distance']) for S in self.results])
+            np.mean([np.std(S['goals']['total_distance'])/S['passengers']['served']
+                     for S in self.results])
         self.totals['unassigned'] = \
             np.mean([S['sanity']['unassigned_passengers'] for S in self.results])
         self.totals['indirect'] = \
@@ -235,9 +243,9 @@ class Tester:
         # ax.legend(('Average','Max (averaged over scenarios)'))
         # elevators distance
         ax = axs[0,1]
-        ax.bar(tuple(range(M)), [r['avg dist'] for r in self.results],
+        ax.bar(tuple(range(M)), [r['dist per task'] for r in self.results],
         yerr=[r['std(dist)'] for r in self.results], color='green', alpha=0.8)
-        ax.set_ylabel('Average Elevator Distance [floors]')
+        ax.set_ylabel('Elevators Distance [floors per task]')
         ax.set_xlabel('Manager')
         ax.set_title('Elevators Distance')
         ax.set_xticks(tuple(range(M)))

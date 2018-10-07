@@ -488,9 +488,9 @@ class Simulator:
 
 if __name__ == "__main__":
     sim_pace = 100 if 'verbose' in sys.argv else None
-    arrival_pace = 1/4 # 1/10, 1/3
-    x = Simulator(sim_pace=sim_pace, arrival_pace=arrival_pace, #debug_mode=1,
-                  manager=ElevatorManager.GreedyManager)
+    arrival_pace = 1/8
+    x = Simulator(sim_pace=sim_pace, arrival_pace=arrival_pace,
+                  manager=ElevatorManager.NaiveRoundRobin)
     x.generate_scenario()
     summary = x.run_simulation()
     plt.show()
