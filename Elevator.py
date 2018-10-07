@@ -17,6 +17,9 @@ class Elevator:
         self.total_opens, self.total_distance = nones(2)
         self.initialize()
 
+    def __str__(self):
+        return f"i={self.idx:d}:\tx={self.x:.2f}, open={self.is_open:b}, motion={self.motion:.0f}, next_t={self.next_t:.2f}\n{self.missions}"
+
     def initialize(self):
         self.x = 0
         self.is_open = False
@@ -41,14 +44,6 @@ class Elevator:
         self.next_t = np.inf
         self.motion = 0
         self.is_open = False
-
-    def update_state(self, t=0):
-        if not self.missions:
-            self.sleep()
-        elif self.missions[0] is None:
-            raise ValueError("Can't cancel current mission if next one is Open.")
-        else:
-            self.move(t)
 
     def locate(self, i):
         '''Get elevator expected location after i missions.'''

@@ -138,7 +138,7 @@ class ManagerTester:
         if "name" in conf:
             print('Warning: unexpected "name" field in configuration.')
             del (conf["name"])
-        x = ElevatorSimulator.Simulator(debug_mode=False, verbose=self.show,
+        x = ElevatorSimulator.Simulator(debug_mode=self.show>=2, verbose=self.show,
                                         sim_pace=10 if self.show else None,
                                         manager=self.manager, **conf)
         x.generate_scenario()

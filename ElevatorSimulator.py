@@ -255,14 +255,14 @@ class Simulator:
         for i_el in missions:
             if i_el == -1: continue # elevator assignment rather than mission
             el = self.el[i_el]
-            immediate_mission = bool(missions[i_el]) and not bool(el.missions)
+            immediate_mission = missions[i_el] and not el.missions
 
             for m in missions[i_el]:
                 if m[0] is None:
                     # remove mission m: (None, *, m)
                     assert(m[2]>=0)
                     del(el.missions[m[2]])
-                    if m[2]==0: el.update_state(self.sim_time)
+                    if m[2]==0: immediate_mission = True
                 elif m[2]==-1:
                     # new mission: (destination floor, open/not, -1)
                     el.missions.append(m[0])
@@ -272,7 +272,7 @@ class Simulator:
                     assert(el.missions[m[2]] is not None), "Trying to split an OPEN mission."
                     el.missions.insert(m[2], m[0])
                     if m[1]: el.missions.insert(m[2]+1, None)
-                    if m[2]==0: el.update_state(self.sim_time)
+                    if m[2]==0: immediate_mission = True
 
             if immediate_mission:
                 if el.missions[0] is None:

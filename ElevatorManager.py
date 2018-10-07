@@ -194,6 +194,6 @@ if __name__ == "__main__":
     import ElevatorTester, matplotlib.pyplot as plt
     c = ElevatorTester.ELEVATOR_TESTS_CONFS[-1]
     c['sim_len'] = 120
-    x = ElevatorTester.ManagerTester(GreedyManager, c, True)
+    x = ElevatorTester.ManagerTester(GreedyManager, c, 1)
     x.single_test(c)
     plt.show()
