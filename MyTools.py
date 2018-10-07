@@ -26,5 +26,7 @@ def assert_zero(*args, eps=sys.float_info.epsilon):
         assert (abs(x)<eps), x
 
 def dist(x, quantiles=(0,10,50,90,100), do_round=False):
+    if not x:
+        return nones(2+len(quantiles))
     s = [len(x), np.mean(x)] + list(np.percentile(x,quantiles))
     return [int(z+np.sign(z)*0.5) for z in s] if do_round else s
