@@ -38,6 +38,7 @@ class Simulator:
 
     Written by Ido Greenberg, 2018
     '''
+    # TODO add stop length instead of the missing acceleration (and reduce it from the open & close time)
 
     def __init__(self, manager=ElevatorManager.NaiveManager, debug_mode=False, verbose=True,
                  sim_len=120, sim_pace=None, time_resolution=0.5, logfile=None, seed=1,
@@ -94,7 +95,7 @@ class Simulator:
 
         ## Manager
         self.manager_info = manager.version_info()
-        self.manager = manager(self.n_floors, self.n_elevators,
+        self.manager = manager(self.n_floors, self.el,
                                        el_capacity, el_speed, el_open_time,
                                        self.arrivals_pace,
                                        self.p_go_up, self.p_go_down, self.p_go_between,
@@ -204,7 +205,7 @@ class Simulator:
             self.log("Arrive", f"n={a.n:d}\t({a.d:.1f})\t{a.xi:d} -> {a.xf:d}")
         del(self.future_arrivals[0])
         new_passengers = [Passenger(a) for _ in range(a.n)]
-        missions = self.manager.handle_arrival(self.sim_time, self.el, a.xi, a.xf)
+        missions = self.manager.handle_arrival(self.sim_time, a.xi, a.xf)
         if self.debug:
             print(missions)
         if -1 in missions:
@@ -212,8 +213,6 @@ class Simulator:
                 ps.assigned_el = missions[-1]
         self.waiting_passengers.extend(new_passengers)
         self.update_missions(missions)
-        if self.debug:
-            print([el.missions for el in self.el])
 
     def end_mission(self):
         i_el = int(np.argmin([el.next_t for el in self.el]))
@@ -233,14 +232,22 @@ class Simulator:
 
         # begin new mission
         if not el.missions:
-            el.sleep()
+            missions = self.manager.handle_no_missions(self.sim_time, i_el)
+            if self.debug:
+                print(missions)
+            if not i_el in missions or not missions[i_el]:
+                el.sleep()
+            self.update_missions(missions)
         elif el.missions[0] is None:
             delay = self.open_el(i_el)
             el.open(self.sim_time, delay)
         else:
             el.move(self.sim_time)
             for ps in self.moving_passengers[i_el]:
-                if el.motion != np.sign(ps.xf-el.x): ps.indirect_motion += 1
+                if el.motion != np.sign(ps.xf-el.x):
+                    ps.indirect_motion += 1
+                    if self.debug:
+                        self.log("INDIRECT", f"{el.motion:d} != {el.x:d}->{ps.xf:d}")
             if self.debug:
                 self.log("Moving", f"#{i_el:02d}\t-> {el.missions[0]:d}")
 
@@ -282,6 +289,9 @@ class Simulator:
                 else:
                     el.move(self.sim_time)
 
+        if self.debug:
+            print([el.missions for el in self.el])
+
     def open_el(self, i):
         el = self.el[i]
         any_activity = False
@@ -296,7 +306,7 @@ class Simulator:
                 self.completed_passengers.append(ps)
                 ps.t2 = self.sim_time
                 if self.debug:
-                    self.log("Exit", f"#{i:02d}")
+                    self.log("Exit", f"#{i:02d}\tt={ps.t2-ps.t0:.0f}s")
         for j in sorted(picked_up, reverse=True):
             del self.moving_passengers[i][j]
 
@@ -308,7 +318,7 @@ class Simulator:
                 if el.capacity <= len(self.moving_passengers[i]):
                     # Elevator is full - count block and re-push the button
                     blocked_entrance = True
-                    missions = self.manager.handle_arrival(self.sim_time, self.el, ps.xi, ps.xf)
+                    missions = self.manager.handle_arrival(self.sim_time, ps.xi, ps.xf)
                     if -1 in missions: ps.assigned_el = missions[-1]
                     else: ps.assigned_el = -1
                     self.update_missions(missions)
@@ -319,12 +329,14 @@ class Simulator:
                 self.moving_passengers[i].append(ps)
                 ps.t1 = self.sim_time
                 delay = max(delay, ps.d)
-                if self.debug: self.log("Enter", f"#{i:02d}")
+                if self.debug: self.log("Enter", f"#{i:02d}\tt={ps.t1-ps.t0:.0f}s")
         for j in sorted(picked_up, reverse=True):
             del self.waiting_passengers[j]
 
         if blocked_entrance: self.blocked_entrances += 1
-        if not any_activity: self.useless_opens += 1
+        if not any_activity:
+            self.useless_opens += 1
+            if self.debug: self.log("USELESS", f"#{i:02d}")
 
         return delay
 
