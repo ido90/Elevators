@@ -13,7 +13,7 @@ class Elevator:
         self.open_time = open_time
         # Initialization
         self.x, self.is_open, self.motion = nones(3)
-        self.missions, self.next_t = nones(2)
+        self.missions, self.next_t = nones(2) # TODO put next_t out of this class
         self.total_opens, self.total_distance = nones(2)
         self.initialize()
 

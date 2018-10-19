@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 from prettytable import PrettyTable
 import matplotlib.pyplot as plt
-import ElevatorSimulator, ElevatorManager
+import ElevatorSimulator, ElevatorManager, DirectManager
 
 '''
     ElevatorTester
@@ -14,9 +14,9 @@ import ElevatorSimulator, ElevatorManager
     Written by Ido Greenberg, 2018
 '''
 
-ELEVATOR_TESTS_MANAGERS = (ElevatorManager.NaiveManager,
-                           ElevatorManager.NaiveRoundRobin,
-                           ElevatorManager.GreedyManager)
+ELEVATOR_TESTS_MANAGERS = (ElevatorManager.NaiveRoundRobin,
+                           ElevatorManager.GreedyManager,
+                           DirectManager.DirectManager,)
 
 ELEVATOR_TESTS_CONFS = [
     {
@@ -115,7 +115,7 @@ ELEVATOR_TESTS_CONFS = [
 class ManagerTester:
 
     def __init__(self, manager=ElevatorManager.NaiveManager, configurations=(),
-                 show=False):
+                 show=0):
         self.manager = manager
         self.configurations = list(configurations)
         self.name = manager.version_info()
@@ -136,11 +136,10 @@ class ManagerTester:
 
     def single_test(self, conf):
         if "name" in conf:
-            print('Warning: unexpected "name" field in configuration.')
             del (conf["name"])
-        x = ElevatorSimulator.Simulator(debug_mode=self.show>=2, verbose=self.show,
-                                        sim_pace=10 if self.show else None,
-                                        manager=self.manager, **conf)
+        x = ElevatorSimulator.Simulator(debug_mode=self.show>0, verbose=self.show,
+                                        sim_pace=10 if self.show>=2 or self.show==-1 else None,
+                                        time_resolution=3, manager=self.manager, **conf)
         x.generate_scenario()
         summary = x.run_simulation()
         return summary
@@ -175,12 +174,13 @@ class ManagerTester:
 class Tester:
 
     def __init__(self, managers=(ElevatorManager.NaiveManager,),
-                 configurations=({},)):
+                 configurations=({},), debug=0):
         self.conf_names = [conf['name'] for conf in configurations]
         for conf in configurations: del(conf['name'])
         self.configurations = list(configurations)
         self.managers = managers
         self.names = [m.version_info()[0] for m in self.managers]
+        self.debug = debug
         self.scores = [] # service time per scenario
         self.served = [] # completely-served passengers [%]
         self.results = [] # other results averaged over scenarios
@@ -193,7 +193,7 @@ class Tester:
 
     def test(self):
         for m in self.managers:
-            x = ManagerTester(m, self.configurations)
+            x = ManagerTester(m, self.configurations, show=self.debug)
             x.test()
             self.scores.append([S['goals']['service_time'][1] for S in x.results])
             s = x.summarize()
@@ -294,7 +294,7 @@ def load_tester(filename="ElevatorTester"):
 
 
 if __name__ == "__main__":
-    x = Tester(ELEVATOR_TESTS_MANAGERS, ELEVATOR_TESTS_CONFS)
+    x = Tester(ELEVATOR_TESTS_MANAGERS, ELEVATOR_TESTS_CONFS, debug=0)
     x.test()
     x.summarize_results()
     plt.show()
