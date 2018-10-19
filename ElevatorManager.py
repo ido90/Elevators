@@ -1,6 +1,5 @@
 
 from MyTools import *
-import Elevator
 
 class NaiveManager:
     '''
@@ -27,12 +26,13 @@ class NaiveManager:
 
     Written by Ido Greenberg, 2018
     '''
-    def __init__(self, n_floors, n_elevators,
+    def __init__(self, n_floors, elevators,
                  capacity, speed, open_time,
                  arrivals_pace=None, p_up=0.5, p_down=0.5, p_between=0., size=1., delay=3.):
         assert_zero(p_up+p_down+p_between-1)
         self.H = n_floors
-        self.N = n_elevators
+        self.N = len(elevators)
+        self.el = elevators
         self.capacity = capacity
         self.speed = speed
         self.open_time = open_time
@@ -44,6 +44,7 @@ class NaiveManager:
             'size':size,
             'delay':delay
         }
+    @staticmethod
     def version_info():
         return ("NaiveManager",
                 "Use the first elevator to handle passengers arrivals sequentially.")
@@ -51,12 +52,12 @@ class NaiveManager:
         pass
     def handle_initialization(self):
         return {}
-    def handle_arrival(self, t, el, xi, xf):
+    def handle_arrival(self, t, xi, xf):
         return {
             -1:0, # assign arrival to elevator 0
             0:[(xi,True,-1),(xf,True,-1)]  # add missions to elevator 0: go to arrival floor and open, then go to arrival destination and open
         }
-    def handle_no_missions(self, t, el, idx):
+    def handle_no_missions(self, t, idx):
         return {}
 
 
@@ -67,10 +68,11 @@ class NaiveRoundRobin(NaiveManager):
         NaiveManager.__init__(self, n_floors, n_elevators, capacity, speed, open_time,
                      arrivals_pace, p_up, p_down, p_between, size, delay)
         self.robin = 0
+    @staticmethod
     def version_info():
         return ("NaiveRoundRobin",
                 "Use the elevators in turns to handle passengers arrivals.")
-    def handle_arrival(self, t, el, xi, xf):
+    def handle_arrival(self, t, xi, xf):
         self.robin = (self.robin + 1) % self.N
         return {
             -1:self.robin,
@@ -93,6 +95,7 @@ class GreedyManager(NaiveManager):
         # elevators status
         #self.bindings = [[] for _ in range(self.N)] # binding destinations (of onboard passengers)
 
+    @staticmethod
     def version_info():
         return ("GreedyManager",
                 '''Try to disperse waiting elevators,
@@ -104,18 +107,18 @@ class GreedyManager(NaiveManager):
             **{self.n0+i:[(self.bases[i],False,-1)] for i in range(self.nn)}
         }
 
-    def handle_arrival(self, t, el, xi, xf):
-        # TODO (1) find least busy in terms of ETA rather than n_missions
+    def handle_arrival(self, t, xi, xf):
+        # TODO find least busy in terms of ETA rather than n_missions
         # is anyone already there?
-        for i, e in enumerate(el):
+        for i, e in enumerate(self.el):
             if not e.missions and e.x==xi:
                 return self.send_elevator(i,xi,xf)
         # for priority p: find someone with p missions or whose p+1 mission is on the way
-        for priority in range(1+max([len(e.missions) for e in el])):
+        for priority in range(1+max([len(e.missions) for e in self.el])):
             dmin = np.inf
             amin = ()
             imin = None
-            for i, e in enumerate(el):
+            for i, e in enumerate(self.el):
                 d,a = self.available(e, priority, xi, xf)
                 if a is None or dmin<=d:
                     continue
@@ -173,27 +176,30 @@ class GreedyManager(NaiveManager):
             i: [(xi, True, -1), (xf, True, -1)]
         }
 
-    def handle_no_missions(self, t, el, idx):
-        # where's everyone intended to be?
-        dests = [[m for m in e.missions if m is not None] for e in el]
-        xfs = [ds[-1] if ds else e.x for e,ds in zip(el,dests)]
-        assert(xfs[idx]==el[idx].x), "'no mission' elevator seems to have more missions."
-        # are there enough grounds?
-        grounds = self.N - np.count_nonzero(xfs)
-        if grounds < self.n0:
-            return {} if el[idx].x==0 else {idx:0}
-        # what's the loneliest base floor?
-        dists = [min([abs(x-base) for i,x in enumerate(xfs) if i!=idx])
-                 for base in self.bases]
-        lonely_base = np.argmax(dists)
-        x = self.bases[lonely_base]
-        return {} if el[idx].x==x else {idx:x}
+    def handle_no_missions(self, t, idx):
+        if self.N == 1:
+            x = 0
+        else:
+            # where's everyone intended to be?
+            dests = [[m for m in e.missions if m is not None] for e in self.el]
+            xfs = [ds[-1] if ds else e.x for e,ds in zip(self.el,dests)]
+            assert(xfs[idx]==self.el[idx].x), "'no mission' elevator seems to have more missions."
+            # are there enough grounds?
+            grounds = self.N - np.count_nonzero(xfs) - int(self.el[idx].x==0)
+            if grounds < self.n0:
+                return {} if self.el[idx].x==0 else {idx:[(0, False, -1)]}
+            # what's the loneliest base floor?
+            dists = [min([abs(x-base) for i,x in enumerate(xfs) if i!=idx])
+                     for base in self.bases]
+            lonely_base = np.argmax(dists)
+            x = self.bases[lonely_base]
+        return {} if self.el[idx].x==x else {idx:[(x, False, -1)]}
 
 
 if __name__ == "__main__":
     import ElevatorTester, matplotlib.pyplot as plt
     c = ElevatorTester.ELEVATOR_TESTS_CONFS[-1]
     c['sim_len'] = 120
-    x = ElevatorTester.ManagerTester(GreedyManager, c, 1)
+    x = ElevatorTester.ManagerTester(GreedyManager, c, -1)
     x.single_test(c)
     plt.show()
