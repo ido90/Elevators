@@ -36,9 +36,11 @@ class Simulator:
                 Manager.handle_arrival() / Manager.handle_no_missions()
                 update_missions()
 
+    TODO:
+    1. add acceleration_time in addition to open_time (for stops w/o opening)
+
     Written by Ido Greenberg, 2018
     '''
-    # TODO add acceleration_time in addition to open_time (for stops w/o opening)
 
     def __init__(self, manager=ElevatorManager.NaiveManager, debug_mode=False, verbose=True,
                  sim_len=120, sim_pace=None, time_resolution=0.5, logfile=None, seed=1,
@@ -73,6 +75,7 @@ class Simulator:
         el_speed = speed # floors per second. Note: acceleration is neglected
         el_open_time = open_time # = time to open = time to close
         # init
+        self.el_next_event_time = [np.inf for _ in range(self.n_elevators)]
         self.el = [Elevator(i, self.n_floors, el_capacity, el_speed, el_open_time)
                    for i in range(self.n_elevators)]
         self.sim_plot = SimPlotter(self.n_floors, self.n_elevators, sim_pace) \
@@ -164,7 +167,7 @@ class Simulator:
     def handle_next_event(self):
         # Find next event's time
         t_arrival = self.future_arrivals[0].t if self.future_arrivals else np.inf
-        t_finish_mission = min([el.next_t for el in self.el])
+        t_finish_mission = min(self.el_next_event_time)
         t_forced_update = self.sim_time + self.time_resolution
         t = min(t_forced_update, t_arrival, t_finish_mission, self.sim_len)
 
@@ -216,7 +219,7 @@ class Simulator:
         self.update_missions(missions)
 
     def end_mission(self):
-        i_el = int(np.argmin([el.next_t for el in self.el]))
+        i_el = int(np.argmin(self.el_next_event_time))
         el = self.el[i_el]
         m = el.missions[0]
         del(el.missions[0])
@@ -237,13 +240,16 @@ class Simulator:
             if self.debug:
                 print(missions)
             if not i_el in missions or not missions[i_el]:
+                self.el_next_event_time[i_el] = np.inf
                 el.sleep()
             self.update_missions(missions)
         elif el.missions[0] is None:
             delay = self.open_el(i_el)
-            el.open(self.sim_time, delay)
+            self.el_next_event_time[i_el] = self.sim_time + 2*el.open_time + delay
+            el.open()
         else:
-            el.move(self.sim_time)
+            self.el_next_event_time[i_el] = self.sim_time+abs(el.missions[0]-el.x)/el.speed
+            el.move()
             for ps in self.moving_passengers[i_el]:
                 if el.motion != np.sign(ps.xf-el.x):
                     ps.indirect_motion += 1
@@ -286,9 +292,11 @@ class Simulator:
                 if el.missions[0] is None:
                     warn("Unexpected mission assignment: open which does not follow motion.")
                     delay = self.open_el(i_el)
-                    el.open(self.sim_time, delay)
+                    self.el_next_event_time[i_el] = self.sim_time + 2*el.open_time + delay
+                    el.open()
                 else:
-                    el.move(self.sim_time)
+                    self.el_next_event_time[i_el] = self.sim_time+abs(el.missions[0]-el.x)/el.speed
+                    el.move()
 
         if self.debug:
             print([el.missions for el in self.el])
@@ -434,13 +442,15 @@ class Simulator:
         ax = axs[1,0]
         s = S['sanity']
         ax.bar(list(range(4)),
-                    [s['unassigned_passengers'],s['indirect_motions'][0],s['unnecessary_opens'],s['blocked_entrances']],
+                    [s['unassigned_passengers'],s['indirect_motions'][0],
+                     s['unnecessary_opens'],s['blocked_entrances']],
                     color='r'
                     )
         ax.set_ylabel('Occurences')
         ax.set_title('Bad Behavior')
         ax.set_xticks(list(range(4)))
-        ax.set_xticklabels(('Unassigned\npassengers', 'Indirect\ntravels', 'Unnecessary\nopens', 'Blocked\nentrances'))
+        ax.set_xticklabels(('Unassigned\npassengers', 'Indirect\ntravels',
+                            'Unnecessary\nopens', 'Blocked\nentrances'))
         # text info
         ax = axs[1,1]
         text1 = '\n'.join((

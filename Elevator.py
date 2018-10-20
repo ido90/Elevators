@@ -13,8 +13,7 @@ class Elevator:
         self.open_time = open_time
         # Initialization
         self.x, self.is_open, self.motion = nones(3)
-        self.missions, self.next_t = nones(2) # TODO put next_t out of this class
-        self.total_opens, self.total_distance = nones(2)
+        self.missions, self.total_opens, self.total_distance = nones(3)
         self.initialize()
 
     def __str__(self):
@@ -25,23 +24,19 @@ class Elevator:
         self.is_open = False
         self.motion = 0 # +1 for up, -1 for down, 0 for standing
         self.missions = []
-        self.next_t = np.inf
         self.total_opens = 0
         self.total_distance = 0
 
-    def open(self, t, delay):
-        self.next_t = t + 2 * self.open_time + delay
+    def open(self):
         self.motion = 0
         self.is_open = True
         self.total_opens += 1
 
-    def move(self, t):
-        self.next_t = t + abs(self.missions[0] - self.x) / self.speed
+    def move(self):
         self.motion = np.sign(self.missions[0] - self.x)
         self.is_open = False
 
     def sleep(self):
-        self.next_t = np.inf
         self.motion = 0
         self.is_open = False
 
