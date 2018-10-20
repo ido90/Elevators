@@ -38,7 +38,7 @@ class Simulator:
 
     Written by Ido Greenberg, 2018
     '''
-    # TODO add stop length instead of the missing acceleration (and reduce it from the open & close time)
+    # TODO add acceleration_time in addition to open_time (for stops w/o opening)
 
     def __init__(self, manager=ElevatorManager.NaiveManager, debug_mode=False, verbose=True,
                  sim_len=120, sim_pace=None, time_resolution=0.5, logfile=None, seed=1,
@@ -85,7 +85,7 @@ class Simulator:
         self.p_go_up = p_up
         self.p_go_down = 1 - (self.p_go_between + self.p_go_up)
         self.arrival_size = size # mean number of passengers per arrival
-        self.delay = delay # typical (not exactly mean) delay on passengers entrance
+        self.delay = delay # mean delay on passengers entrance
         # init
         self.scenario = []
         self.future_arrivals = []
@@ -110,7 +110,8 @@ class Simulator:
 
         a_times = list(np.sort(self.sim_len * np.random.rand(n_arrivals)))
         a_sizes = list(np.floor(1+np.random.exponential(self.arrival_size-1,n_arrivals)).astype(int))
-        a_delays = list(np.random.lognormal(0,np.sqrt(self.delay),n_arrivals))
+        a_delays = list(np.random.gamma(self.delay/8,8,n_arrivals))
+        #list(np.random.lognormal(0,np.sqrt(self.delay),n_arrivals))
         a_types = list(np.random.choice(['up', 'down', 'between'], n_arrivals, True,
                                                (self.p_go_up, self.p_go_down, self.p_go_between)))
         a_from = [(0 if tp=='up' else int(1+self.n_floors*np.random.rand()))
