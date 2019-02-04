@@ -8,6 +8,7 @@ Implemented managers
     NaiveManager: Use the first elevator to handle passengers arrivals sequentially.
     NaiveRoundRobin: Use the elevators in turns to handle passengers arrivals.
     GreedyManager: Try to disperse waiting elevators, and assign elevators to passengers greedily.
+    DirectManager: Go on while there're more passengers in the current motion direction, then turn around (variant of the classic elevator algorithm).
 
 Class: ElevatorSimulator.Simulator
 
@@ -15,8 +16,7 @@ Class: ElevatorSimulator.Simulator
 
     Involved classes:
     Simulator       = simulation manager
-    ElevatorManager = decision maker (very naive algorithm intended to be inherited
-                      by smarter managers which would overwrite its methods)
+    ElevatorManager = decision makers
     Elevator        = represent the elevators in the simulation
     Arrival         = encode a single event of arrival of passengers
     Passenger       = encode and track a single passenger
