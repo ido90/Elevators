@@ -34,6 +34,9 @@ Class: ElevatorSimulator.Simulator
                 Manager.handle_arrival() / Manager.handle_no_missions()
                 update_missions()
 
+| ![](https://idogreenberg.neocities.org/linked_images/elevators.JPG) |
+| :--: |
+| A screenshot from the visual simulation |
 
 Module: ElevatorTester
 
@@ -60,3 +63,8 @@ Module: ElevatorManager
     (None,False,k)   = remove the current k'th mission of the elevator.
     In cases of new arrival, the output dict must also include:
     {-1 : elevator_assigned_to_arrival}
+
+
+| ![](https://github.com/ido90/Elevators/blob/master/Demonstrations/tests%20summary.JPG) |
+| :--: |
+| Summary of the results of the various managers |
