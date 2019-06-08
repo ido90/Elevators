@@ -1,6 +1,8 @@
-# Elevators Visual Simulator and Optimization Algorithms
+# Elevators Management: Visual Simulator and Optimization Algorithms
 
 This repo implements a visual simulator of elevators system, along with several simple optimization algorithms and analysis of their results.
+
+A [Reinforcement-Learning manager](#module-reinforcementelevator) is intended to be implemented and tested vs. the classic [DirectManager](#implemented-managers).
 
 ## Implemented managers
 
@@ -13,17 +15,18 @@ Note: all the currently-implemented managers are either naive or imcomplete, and
 
 ## Class: ElevatorSimulator.Simulator
 
-    This class implements a simulation of elevators which serve arriving passengers.
+This class implements a simulation of elevators which serve arriving passengers.
 
-    Involved classes:
-    Simulator       = simulation manager
-    ElevatorManager = decision makers
-    Elevator        = represent the elevators in the simulation
-    Arrival         = encode a single event of arrival of passengers
-    Passenger       = encode and track a single passenger
-    SimPlot         = visualize the simulation dynamically via matplotlib
+Involved classes:
+- Simulator       = simulation manager
+- ElevatorManager = decision makers
+- Elevator        = represent the elevators in the simulation
+- Arrival         = encode a single event of arrival of passengers
+- Passenger       = encode and track a single passenger
+- SimPlot         = visualize the simulation dynamically via matplotlib
 
-    Main flow:
+Main flow:
+
     generate_scenario()
     run_simulation()
         sim_initialize()
@@ -72,6 +75,6 @@ This module is **NOT IMPLEMENTED**, up to definition of states and a simple coun
 Instead, some encoding of the states should be used (e.g. like [here](https://papers.nips.cc/paper/1073-improving-elevator-performance-using-reinforcement-learning.pdf)).
 
 Implementation of this module should take care of the following issues:
-1. **Sampling resolution**: high-resolution (e.g. sample every time the elevators move one floor) permits simple state-space, but low-resolution (e.g. sample when an elevator reaches its destination, etc.) is better synced with the simulator.
-2. **State encoding**: compact encoding of the states so that a learner can use an encoded state to make decisions.
-3. **Train & test process**: train the decision-maker in various configurations of buildings and test it.
+1. **Sampling resolution**: high-resolution (e.g. sample every time the elevators move one floor) permits simple state-space, but low-resolution (e.g. sample when an elevator reaches its destination, etc.) is better synced with the simulator interface.
+2. **State encoding**: compact encoding of the states so that a learner can use an encoded state to make a decision.
+3. **Train & test process**: train the decision-maker in various scenarios and test it.
