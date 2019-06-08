@@ -8,7 +8,7 @@ A [Reinforcement-Learning manager](#module-reinforcementelevator) is intended to
 
 ## Implemented managers
 
-Note: all the currently-implemented managers are either naive or imcomplete, and were mainly used for testing and demonstration of the simulative infrastructure.
+Note: all the currently-implemented managers are either naive or incomplete, and were mainly used for testing and demonstration of the simulative infrastructure, as well as future reference for more advanced algorithms.
 
 - **NaiveManager**: Use the first elevator to handle passengers arrivals sequentially.
 - **NaiveRoundRobin**: Use the elevators in turns to handle passengers arrivals.
