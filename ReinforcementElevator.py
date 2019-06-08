@@ -22,13 +22,22 @@ def count_states(H, N, capacity):
     # direct search in state-space (e.g. Value Iteration)
     # is impractical for any interesting configuration.
 
+    # for each elevator - in which floor is it?
     locations = H**N
+    # for each elevator - in which direction is it moving?
     directions = 3**N
+    # for each elevator and each floor -
+    # how many passengers are carried towards that floor?
     carried = sum([fac(H)/(fac(H-i)*fac(i))
                        for i in range(capacity+1)])**N
+    # for each elevator and each pair of floors -
+    # are there (should be how many...) passengers waiting
+    # for the elevator to take them between the floors?
     waiting_full = (2**(H**2))**N
     waiting_min = sum([fac(H**2)/(fac(H**2-i)*fac(i))
                        for i in range(capacity+1)])**N
+    # unassigned passengers: for each pair of floors,
+    # how many passengers are waiting for assignment.
     new_full = 2**(H**2)
     new_min = H**2 + 1
 
