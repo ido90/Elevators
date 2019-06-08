@@ -2,6 +2,8 @@
 
 This repo implements a visual simulator of elevators system, along with several simple optimization algorithms and analysis of their results.
 
+Some of the results are demonstrated [here](https://github.com/ido90/Elevators/tree/master/Demonstrations), and some of them can be reproduced using [these](https://github.com/ido90/Elevators/tree/master/Main) scripts.
+
 A [Reinforcement-Learning manager](#module-reinforcementelevator) is intended to be implemented and tested vs. the classic [DirectManager](#implemented-managers).
 
 ## Implemented managers
@@ -12,6 +14,10 @@ Note: all the currently-implemented managers are either naive or imcomplete, and
 - **NaiveRoundRobin**: Use the elevators in turns to handle passengers arrivals.
 - **GreedyManager**: Try to disperse waiting elevators, and assign elevators to passengers greedily.
 - **DirectManager**: Go on while there're more passengers in the current motion direction, then turn around (variant of the classic elevator algorithm).
+
+| ![](https://github.com/ido90/Elevators/blob/master/Demonstrations/tests%20summary.png) |
+| :--: |
+| Summary of the results of the various managers |
 
 ## Class: ElevatorSimulator.Simulator
 
@@ -62,12 +68,7 @@ where a single task is encoded as a 3D-tuple:
 - (n,True/False,k) = get in the middle of another mission - go to n and push it as the k'th task of the elevator.
 - (None,False,k)   = remove the current k'th mission of the elevator.
 
-In cases of new arrival, the output dict must also include: {-1 : elevator_assigned_to_arrival}
-
-| ![](https://github.com/ido90/Elevators/blob/master/Demonstrations/tests%20summary.JPG) |
-| :--: |
-| Summary of the results of the various managers |
-
+In cases of new arrival, the output dict must also include: {-1 : elevator_assigned_to_arrival}.
 
 ## Module: ReinforcementElevator
 
